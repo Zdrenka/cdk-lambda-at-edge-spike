@@ -1,8 +1,6 @@
-# Welcome to your CDK TypeScript project
+# CDK Lambda@Edge add/remove headers
 
-This is a blank project for CDK development with TypeScript.
-
-The `cdk.json` file tells the CDK Toolkit how to execute your app.
+Can we drop some headers and add new headers?
 
 ## Useful commands
 
