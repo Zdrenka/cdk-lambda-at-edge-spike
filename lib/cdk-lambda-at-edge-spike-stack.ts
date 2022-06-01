@@ -1,16 +1,41 @@
-import { Stack, StackProps } from 'aws-cdk-lib';
-import { Construct } from 'constructs';
-// import * as sqs from 'aws-cdk-lib/aws-sqs';
+import { CfnOutput, Stack, StackProps } from "aws-cdk-lib";
+import { aws_s3 as s3 } from "aws-cdk-lib";
+import { Construct } from "constructs";
+import { aws_cloudfront as cloudfront } from "aws-cdk-lib";
+import { aws_lambda as lambda } from "aws-cdk-lib";
+import { aws_cloudfront_origins as origins } from "aws-cdk-lib";
 
 export class CdkLambdaAtEdgeSpikeStack extends Stack {
   constructor(scope: Construct, id: string, props?: StackProps) {
     super(scope, id, props);
 
-    // The code that defines your stack goes here
+    const headerFunction = new cloudfront.experimental.EdgeFunction(
+      this,
+      "Headers",
+      {
+        runtime: lambda.Runtime.NODEJS_12_X,
+        handler: "headers.handler",
+        code: lambda.Code.fromAsset("resources"),
+      }
+    );
 
-    // example resource
-    // const queue = new sqs.Queue(this, 'CdkLambdaAtEdgeSpikeQueue', {
-    //   visibilityTimeout: cdk.Duration.seconds(300)
-    // });
+    const dist = new cloudfront.Distribution(this, "dev-lankester-dist", {
+      defaultBehavior: {
+        origin: new origins.HttpOrigin("amplience.com", {
+          originPath: "/developers/",
+        }),
+
+        edgeLambdas: [
+          {
+            functionVersion: headerFunction.currentVersion,
+            eventType: cloudfront.LambdaEdgeEventType.ORIGIN_RESPONSE,
+          },
+        ],
+      },
+    });
+
+    new CfnOutput(this, "dev-lankester-dist-output", {
+      value: dist.distributionDomainName,
+    });
   }
 }
