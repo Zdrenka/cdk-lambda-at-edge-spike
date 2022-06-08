@@ -20,15 +20,24 @@ export class CdkLambdaAtEdgeSpikeStack extends Stack {
     );
 
     const dist = new cloudfront.Distribution(this, "dev-lankester-dist", {
+      additionalBehaviors: {
+        "/hubs/*/banana/*": {
+          origin: new origins.HttpOrigin("google.com"),
+          originRequestPolicy: cloudfront.OriginRequestPolicy.ALL_VIEWER,
+          cachePolicy: cloudfront.CachePolicy.CACHING_DISABLED,
+        },
+      },
       defaultBehavior: {
-        origin: new origins.HttpOrigin("amplience.com", {
-          originPath: "/developers/",
-        }),
-
+        origin: new origins.HttpOrigin("httpbin.org"),
+        originRequestPolicy: cloudfront.OriginRequestPolicy.ALL_VIEWER,
+        cachePolicy: cloudfront.CachePolicy.CACHING_DISABLED,
         edgeLambdas: [
           {
             functionVersion: headerFunction.currentVersion,
-            eventType: cloudfront.LambdaEdgeEventType.ORIGIN_RESPONSE,
+
+            // VIEWER_REQUEST - inspect the original headers sent by the user's browser and
+            // delete some headers before the request is handled by cloudfront
+            eventType: cloudfront.LambdaEdgeEventType.ORIGIN_REQUEST,
           },
         ],
       },
